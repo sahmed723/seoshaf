@@ -1,0 +1,27 @@
+{
+  "project_id": "your-project-id",
+  "display_name": "Your Project",
+  "domain": "www.example.com",
+  "repo_path": ".",
+  "active": false,
+  "persona_filter": "Describe who the BUYER is and what audiences to exclude. The single most important field.",
+  "buyer_exclude": ["audiences to exclude"],
+  "priority_pages": [
+    "/",
+    "/key-page-1",
+    "/key-page-2"
+  ],
+  "queries": {
+    "serp": ["query 1", "query 2"],
+    "ai": ["natural language prompt 1", "natural language prompt 2"]
+  },
+  "competitors": ["competitor1.com", "competitor2.com"],
+  "seed_keywords": ["keyword 1", "keyword 2"],
+  "outputs": {
+    "research_dir": "research/seo",
+    "geo_dir": "research/geo"
+  },
+  "integrations": {
+    "semrush_db": "us"
+  }
+}

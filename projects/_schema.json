@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SEOshaf Project Config",
+  "description": "Per-project parameters for the SEOshaf managed-agent system. One file per project under ~/Documents/SEOshaf/projects/. Validated by every cadence skill before any work runs. Adding a new project means writing one of these files and calling lib/schedule-routines.sh.",
+  "type": "object",
+  "required": ["project_id", "display_name", "domain", "repo_path"],
+  "additionalProperties": false,
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,40}$",
+      "description": "Kebab-case identifier. Used as scheduled-task-id prefix and dashboard key. Stable forever — renaming breaks history."
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable name shown in DASHBOARD.md."
+    },
+    "domain": {
+      "type": "string",
+      "pattern": "^[a-z0-9.-]+\\.[a-z]{2,}$",
+      "description": "Bare domain or subdomain, no scheme. e.g. www.keelway.com"
+    },
+    "repo_path": {
+      "type": "string",
+      "description": "Absolute path to the project's local repo. Artifacts are written under this path's outputs.research_dir. Spaces are allowed and must be preserved literally."
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "When false, the dashboard hides the project and all scheduled cadences exit early."
+    },
+    "persona_filter": {
+      "type": "string",
+      "default": "",
+      "description": "Free-text prompt fragment injected into every skill. Describes who the BUYER is and what audiences to exclude. This is the single most important field — bad persona_filter produces patient-facing keywords on a B2B site."
+    },
+    "buyer_exclude": {
+      "type": "array",
+      "items": {"type": "string"},
+      "default": [],
+      "description": "Explicit terms or audience labels to exclude (e.g. 'driver-facing', 'consumer trucking'). Used as a hard filter on top of persona_filter."
+    },
+    "priority_pages": {
+      "type": "array",
+      "items": {"type": "string"},
+      "default": [],
+      "description": "URL paths (leading slash, no host) for the indexation watch. Max ~10 — agent samples the top entries each day."
+    },
+    "queries": {
+      "type": "object",
+      "additionalProperties": false,
+      "default": {"serp": [], "ai": []},
+      "properties": {
+        "serp": {
+          "type": "array",
+          "items": {"type": "string"},
+          "default": [],
+          "description": "Google SERP queries for weekly rank tracking."
+        },
+        "ai": {
+          "type": "array",
+          "items": {"type": "string"},
+          "default": [],
+          "description": "Natural-language prompts to ask ChatGPT / Perplexity / Gemini / AI Overviews for citation tracking."
+        }
+      }
+    },
+    "competitors": {
+      "type": "array",
+      "items": {"type": "string"},
+      "default": [],
+      "description": "Competitor domains (bare, no scheme). Used by seo-keyword-competitor-refresh for Semrush competitor mining."
+    },
+    "seed_keywords": {
+      "type": "array",
+      "items": {"type": "string"},
+      "default": [],
+      "description": "Seed phrases for keyword expansion. The skill broadens these via Semrush."
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "default": {"research_dir": "research/seo", "geo_dir": "research/geo"},
+      "properties": {
+        "research_dir": {"type": "string", "default": "research/seo"},
+        "geo_dir":      {"type": "string", "default": "research/geo"}
+      }
+    },
+    "integrations": {
+      "type": "object",
+      "additionalProperties": false,
+      "default": {},
+      "properties": {
+        "semrush_db":   {"type": "string", "description": "Semrush database code, e.g. 'us'. Default 'us' when absent."},
+        "gsc_property": {"type": "string", "description": "GSC property string. When absent, indexation skill skips GSC-specific checks."},
+        "bing_site":    {"type": "string", "description": "Bing Webmaster site URL. When absent, indexation skill skips Bing-specific checks."}
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+# Live project configs are private — they contain client domains, persona
+# filters, and other engagement-specific content. The _schema.json and
+# _template.json are public.
+projects/*.json
+!projects/_schema.json
+!projects/_template.json
+
+# Live dashboard state is per-instance. The DASHBOARD.md generator is
+# in lib/, but the live state stays local.
+dashboard/state.json
+dashboard/runs/
+dashboard/DASHBOARD.md
+
+# Design / scratch
+*.html
+
+# OS / editor
+.DS_Store
+*.swp
