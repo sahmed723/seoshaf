@@ -28,6 +28,23 @@ git checkout -B "$BRANCH"
 
 mkdir -p "$RESEARCH_DIR"
 ART="$RESEARCH_DIR/indexation-$TODAY.md"
+
+# Tracker — write a `cadence_runs` row at start; finish below.
+CADENCE_TYPE=indexation
+# (See _tracker.md for post_cadence / finish_cadence helpers.)
+[ -n "$CADENCE_API_SECRET" ] && {
+  post_cadence () {
+    local body="$1"
+    local sig=$(printf '%s' "$body" | openssl dgst -sha256 -hmac "$CADENCE_API_SECRET" -hex | awk '{print $2}')
+    curl -s -X POST https://www.topseoagents.com/api/cadence-runs \
+      -H "Content-Type: application/json" \
+      -H "X-Cadence-Signature: $sig" --data-raw "$body"
+  }
+  START_BODY=$(jq -nc --arg pid "$CADENCE_PROJECT_ID" --arg cad "$CADENCE_TYPE" --arg tid "$CADENCE_TRIGGER_ID" \
+    '{action:"start", project_id:$pid, cadence:$cad, trigger_id:$tid}')
+  RUN_ID=$(post_cadence "$START_BODY" | jq -r '.run_id // empty')
+  echo "tracker start: run_id=$RUN_ID"
+}
 ```
 
 ## Run
@@ -72,6 +89,23 @@ ART="$RESEARCH_DIR/indexation-$TODAY.md"
      --title "[$DISPLAY] indexation watch $TODAY" \
      --body "Automated SEOshaf cadence. healthy=$healthy at_risk=$atrisk sitemap_urls=$urls"
    ```
+
+## Tracker — finish
+
+After the PR is opened (or you decided not to write the artifact), POST the finish row:
+
+```bash
+[ -n "$RUN_ID" ] && {
+  FIN_BODY=$(jq -nc \
+    --arg pid "$CADENCE_PROJECT_ID" --arg cad "$CADENCE_TYPE" --arg run "$RUN_ID" \
+    --arg url "${PR_URL:-}" \
+    --argjson sum "$(jq -nc --argjson h "$healthy" --argjson a "$atrisk" --argjson u "$urls" '{healthy:$h, at_risk:$a, sitemap_urls:$u}')" \
+    '{action:"finish", project_id:$pid, cadence:$cad, run_id:$run, status:"success", summary:$sum, artifact_url:$url}')
+  post_cadence "$FIN_BODY" > /dev/null
+}
+```
+
+On any failure path before this point, replace `status:"success"` with `status:"failed"` and put the error message in `summary.error`.
 
 ## Exit
 

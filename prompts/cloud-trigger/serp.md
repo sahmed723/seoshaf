@@ -28,6 +28,33 @@ git checkout -B "$BRANCH"
 
 mkdir -p "$RESEARCH_DIR"
 ART="$RESEARCH_DIR/serp-citations-$TODAY.md"
+
+CADENCE_TYPE=serp
+[ -n "$CADENCE_API_SECRET" ] && {
+  post_cadence () {
+    local body="$1"
+    local sig=$(printf '%s' "$body" | openssl dgst -sha256 -hmac "$CADENCE_API_SECRET" -hex | awk '{print $2}')
+    curl -s -X POST https://www.topseoagents.com/api/cadence-runs \
+      -H "Content-Type: application/json" \
+      -H "X-Cadence-Signature: $sig" --data-raw "$body"
+  }
+  START_BODY=$(jq -nc --arg pid "$CADENCE_PROJECT_ID" --arg cad "$CADENCE_TYPE" --arg tid "$CADENCE_TRIGGER_ID" \
+    '{action:"start", project_id:$pid, cadence:$cad, trigger_id:$tid}')
+  RUN_ID=$(post_cadence "$START_BODY" | jq -r '.run_id // empty')
+  echo "tracker start: run_id=$RUN_ID"
+}
+```
+
+After the PR is opened, finish the row:
+
+```bash
+[ -n "$RUN_ID" ] && {
+  FIN_BODY=$(jq -nc \
+    --arg pid "$CADENCE_PROJECT_ID" --arg cad "$CADENCE_TYPE" --arg run "$RUN_ID" --arg url "${PR_URL:-}" \
+    --argjson sum "$(jq -nc --argjson q "$queries_tracked" --argjson up "$ranks_improved" --argjson dn "$ranks_dropped" '{queries:$q, ranks_up:$up, ranks_down:$dn}')" \
+    '{action:"finish", project_id:$pid, cadence:$cad, run_id:$run, status:"success", summary:$sum, artifact_url:$url}')
+  post_cadence "$FIN_BODY" > /dev/null
+}
 ```
 
 ## Run
